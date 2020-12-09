@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: "{% url 'ajax_test' %}",
+            }).done(function (data) {
+                location.href = "{% url 'homepage' %}"
+            });
+        });
+    </script>
+</head>
+<body>
+<div id="containerText">
+    <h1 style="text-align: center">Place your RFID card or token on the scanner</h1>
+</div>
+</body>
+</html>
