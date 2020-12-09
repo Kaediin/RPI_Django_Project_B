@@ -1,5 +1,12 @@
 import time
+import json
+import asyncio
 
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, redirect
+
+from threading import Thread
+from datetime import datetime
 import RPi.GPIO as GPIO
 from asgiref.sync import sync_to_async
 from mfrc522 import SimpleMFRC522
@@ -11,47 +18,29 @@ from luma.core.render import canvas
 from luma.core.virtual import viewport
 from luma.led_matrix.device import max7219
 
-# Create your views here.
-reader = SimpleMFRC522()
 GPIO.setwarnings(False)
 
-import json
-import asyncio
 
-from django.http import HttpResponse
-from django.shortcuts import render
-
-from threading import Thread
-from datetime import datetime
-
-#
-class ProcessThread(Thread, ):
+class ProcessThread(Thread):
     def __init__(self, name):
         Thread.__init__(self)
         self.name = name
         self.started = datetime.now()
 
     def run(self):
-        # I added this so you might know how long the process lasted
-        # just incase any optimization of your code is needed
-        authenticate_user(self.name)
-        # finished = datetime.now()
-        # duration = self.started - finished
-        # print("%s thread started at %s and finished at %s in " \
-        #       "%s seconds" % (self.name, self.started, finished, duration))
+        print("Show matrix on different thread")
+        show_matrix(f'Hello {self.name}')
 
 
 
 def ajax_view(request):
     print('Running RFID')
     reader = SimpleMFRC522()
-    username = ""
     try:
         id, text = reader.read()
-        print(id)
-        print(text)
         username = text
         card_id = id
+        print(f'User: {username}\nId: {id}')
         request.session['username'] = username
         request.session['id'] = card_id
         my_thread = ProcessThread(username)
@@ -66,31 +55,39 @@ def ajax_view(request):
 
     data = json.dumps(context)
 
-    print(f'Returning info: {data}')
-
     return HttpResponse(data, content_type='application/json')
 
-# helper funcs
-def authenticate_user(username):
+
+def show_matrix(message):
+    print("Loading Matrix LED")
     serial = spi(port=0, device=0, gpio=noop())
     device = max7219(serial, width=32, height=8, block_orientation=-90, cascaded=4)
     device.contrast(5)
     device.clear()
     virtual = viewport(device, width=32, height=8)
-    show_message(device, f'Hello {username}', fill="white", font=proportional(LCD_FONT), scroll_delay=0.1)
+    show_message(device, f'{message}', fill="white", font=proportional(LCD_FONT), scroll_delay=0.04)
+
 
 def index(request):
-    # let us now run start the thread
-    # print(result)
+    # Loading index.html
     return render(request, 'index.html')
 
+
 def homepage(request):
+    try:
+        print("User authenticated, going to home")
+        username = request.session['username']
+        id = request.session['id']
+        return render(request, 'home.html', {
+            'username': username,
+            'id': id
+        })
+    except ValueError as e:
+        print('Authenticator failed, going back to index.')
+        print(e)
+        return render(request, 'index.html')
 
-    username = request.session['username']
-    id = request.session['id']
 
-
-    return render(request, 'home.html', {
-        'username': username,
-        'id': id
-    })
+def logout(request):
+    print("Logging user out")
+    return redirect('/')
