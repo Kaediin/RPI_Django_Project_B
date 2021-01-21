@@ -1,12 +1,225 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Homepage</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-<h1>Welcome: {{ username }}</h1>
-<h1>Card id: {{ id }}</h1>
-<a href="{% url 'logout' %}">Log out</a>
+{% include 'header.html' %}
+
+<div id="container">
+
+    {#    Container for the form#}
+    {#    <div id="containerForm">#}
+    {#        <form id="form_filter" action="{% url 'filterData' %}" method="get">#}
+    {#            <div id="containerReverse">#}
+    {#                <select id="select" name="key">#}
+    {#                    {% for key in keys %}#}
+    {#                        <option name="{{ key }}">{{ key }}</option>#}
+    {#                    {% endfor %}#}
+    {#                </select>#}
+    {#                <img id="reverse_icon" src="{% static 'admin/img/reverse.svg' %}" alt="Reverse list"#}
+    {#                     onclick="reverseList()">#}
+    {#            </div>#}
+    {#            <input type="submit">#}
+    {#        </form>#}
+    {#        <br>#}
+    {#    </div>#}
+
+    {#    Data info#}
+    {#    <h1>Filtered on key: <span style="color: #004080">{{ filter }}</span></h1>#}
+    {#    <img id="filter" style="cursor: pointer" src="{% static 'admin/img/reverse.svg' %}" alt="reverse"#}
+    {#         onclick="reverseList()" width="30px"/>#}
+{#    <h1>Welcome: {{ username }}</h1>#}
+{#    <h1>Card id: {{ id }}</h1>#}
+    {#    <a href="{% url 'logout' %}">Log out</a>#}
+    <h1>Item count: <span style="color: #004080" id="span_item_count">Loading...</span></h1>
+    {% if messages %}
+        {% for message in messages %}
+            <p id="message">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {#    <input id="searchbar" type="text">#}
+
+    <div id="loadingPlaceholder">
+        <h1>Fetching results from Steam API</h1>
+    </div>
+    <div id="containerPerItem">
+        <h1 class="name"></h1>
+        <h1 class="appid"></h1>
+    </div>
+</div>
+
 </body>
+<script>
+
+
+    {#Sets the value of the select option so that the previous filter key is selected#}
+    {#var select = document.getElementById('select')#}
+    {#var options = select.options;#}
+    {#for (var opt, j = 0; opt = options[j]; j++) {#}
+    {#    if (opt.value === '{{ filter }}') {#}
+    {#        select.selectedIndex = j;#}
+    {#        break;#}
+    {#    }#}
+
+    {#Declares the loader value#}
+    $(document).ready(function () {
+
+        {#$("#searchbar").change(function () {#}
+        {#    value = $("#searchbar").val()#}
+        {#    $.ajax({#}
+        {#        url: "{% url 'search' input=12345  %}".replace(/12345/, value),#}
+        {#    }).done(function (data) {#}
+        {#        console.log(data.app)#}
+        {#    });#}
+
+
+        $.ajax({
+            url: "{% url 'fetch_steam_apps' %}",
+        }).done(function (data) {
+
+            document.getElementById('span_item_count').innerText = data.apps.length
+
+            document.getElementById('loadingPlaceholder').style.display = "none"
+
+
+            var loader = 0
+
+            {#Calls the function that loads 10 elements from the JSON#}
+            loadmore()
+
+            {#Scroll detection on the window#}
+            window.onscroll = function (ev) {
+
+                {#If the user's scroll position is at the bottom of the window = load 10 more elements from the list#}
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                    loadmore()
+                }
+            }
+
+            {#Load more function#}
+
+            function loadmore() {
+                const dict_list = data.apps;
+
+                for (i = loader * 10; i < (loader * 10) + 10; i++) {
+                    console.log('Loading item: ' + dict_list[i]['appid'])
+
+                    var item = document.getElementById('containerPerItem')
+                    var clone = item.cloneNode(true)
+
+                    clone.style.display = 'flex'
+
+                    clone.querySelector('.name').innerText = dict_list[i]['name']
+                    clone.querySelector('.appid').innerText = "ID: " + dict_list[i]['appid']
+
+                    clone.addEventListener('click', (evt) => {
+                        try {
+
+                            var app_id
+                            if (evt.target.id === "containerPerItem") {
+                                app_id = evt.target.querySelector('.appid').innerText;
+                            } else {
+                                app_id = evt.target.parentElement.querySelector('.appid').innerText;
+                            }
+
+                            app_id = app_id.replace('ID: ', "")
+                            console.log(app_id)
+                            if (app_id > 0) {
+                                location.href = '{% url 'open_app_details' appid=12345 %}'.replace(/12345/, app_id)
+                            } else {
+                                alert('Error launching details. Please choose another game.')
+                            }
+                        } catch (e) {
+                            console.log(e)
+                        }
+                    })
+
+                    document.body.appendChild(clone)
+                }
+
+                loader++
+            }
+
+        });
+    });
+
+    {#function reverseList() {#}
+    {#    location.href = '{% url 'index' %}'#}
+</script>
 </html>
+<style>
+    div#container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: white;
+    }
+
+    #container h1 {
+        color: white;
+    }
+
+    input[type=submit] {
+        background: none;
+        border: 1px solid white;
+        color: white;
+        width: 100%;
+        padding: 5px 20px 5px 20px;
+        cursor: pointer;
+    }
+
+    #headerTitle h1 {
+        color: white;
+    }
+
+    select {
+        width: 200px;
+        padding: 5px;
+    }
+
+    #containerPerItem {
+        display: none;
+        flex-direction: column;
+        border: 7px solid black;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 50px auto 50px auto;
+        width: 60%;
+        color: white;
+    }
+
+    #containerPerItem:hover {
+        cursor: pointer;
+        background: black;
+        transition: 0.8s;
+    }
+
+    #message {
+        color: red;
+        padding: 0;
+        margin: 2px 0 0 0;
+    }
+
+    #loadingPlaceholder {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 50vh;
+    }
+
+    #loadingPlaceholder {
+        margin: 0;
+        padding: 0;
+    }
+
+    #filter {
+        width: 30px;
+        padding: 0 10px 0 10px;
+        filter: invert(1);
+    }
+</style>

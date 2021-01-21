@@ -5,18 +5,40 @@
     <title>Title</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
+        /*
         $(document).ready(function () {
             $.ajax({
-                url: "{% url 'ajax_test' %}",
+                {#url: "{% url 'ajax_test' %}",#}
             }).done(function (data) {
-                location.href = "{% url 'homepage' %}"
+                {#location.href = "{% url 'homepage' %}"#}
             });
         });
+        */
     </script>
 </head>
 <body>
 <div id="containerText">
-    <h1 style="text-align: center">Place your RFID card or token on the scanner</h1>
+    <h1 style="text-align: center">Waiting on confirmation (button press)</h1>
 </div>
 </body>
 </html>
+<style>
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+        margin: 0 0 0 0;
+        padding: 0;
+        background: #171a21;
+    }
+
+    #containerText{
+        color: white;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+</style>

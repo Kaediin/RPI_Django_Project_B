@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<link href="" rel="stylesheet" type="text/css">
+<body>
+<section id="header">
+    <div id="containerHeader">
+        <div id="img" onclick="location.href = '{% url 'homepage' %}'">
+            <h1>STEAM</h1>
+        </div>
+    </div>
+</section>
+</body>
+</html>
+<style>
+
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+        margin: 0 0 0 0;
+        padding: 0;
+        background: #171a21;
+    }
+
+
+    #header {
+        margin-bottom: 100px;
+        background: #00264d;
+        box-shadow: 0 0.125rem 0 0 rgba(7, 7, 33, .15);
+    }
+
+    #containerHeader {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #img h1 {
+        cursor: pointer;
+        color: white;
+    }
+</style>

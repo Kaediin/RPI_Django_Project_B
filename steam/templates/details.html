@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Details</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+
+        var percentage_global = 0
+
+        $(document).ready(function () {
+            $.ajax({
+                url: "{% url 'fetch_details' appid=12345 %}".replace(/12345/, '{{ appid }}')
+            }).done(function (data) {
+                if (data.success) {
+                    document.getElementById('containerInfo').style.display = 'flex'
+                    var details_ss = data.details_ss
+
+                    var game_data = data.details['{{ appid }}']['data']
+                    console.log(game_data)
+                    document.getElementById('name').innerHTML = game_data['name']
+                    {#document.getElementById('game_type').innerHTML = "Gametype: "+game_data['type']#}
+                    {#document.getElementById('required_age').innerHTML = game_data['required_age']#}
+                    document.getElementById('about_the_game').innerHTML = game_data['about_the_game']
+                    document.getElementById('short_description').innerHTML = game_data['short_description']
+                    document.getElementById('supported_languages').innerHTML = game_data['supported_languages']
+                    document.getElementById('release_date').innerHTML = "Release date: " + game_data['release_date']['date']
+                    document.getElementById('developers').innerHTML = game_data['developers']
+                    document.getElementById('publishers').innerHTML = game_data['publishers']
+                    document.getElementById('website').href = game_data['website']
+                    document.getElementById('owners').innerHTML = "<p><b>Owners: </b>" + details_ss['owners'] + "</p>"
+                    document.getElementById('price').innerHTML = "<p><b>Price: </b>" + parseFloat(details_ss['price'] / 100) + "$" + "</p>"
+
+                    setRating(details_ss)
+                    setPlatforms(game_data['platforms'])
+                    setWebsite(game_data['website'])
+                    setUpcoming(game_data['release_date'])
+                    validateAboutDescription(game_data['about_the_game'], game_data['short_description'])
+                } else {
+                    location.href = "{% url 'homepage' %}"
+                }
+            })
+            /*
+            $.ajax({
+                url: "{% url 'set_percentage_servo' percentage=12345 %}".replace(/12345/, percentage_global)
+            }).done(function (data) {
+                console.log('Servo status: '+data)
+            })
+            */
+        });
+
+        function setRating(details_ss) {
+            const pos = details_ss['positive']
+            const neg = details_ss['negative']
+            const total = pos + neg
+            var neg_frac;
+            if (pos === 0 || neg === 0){
+                if (pos === 0){
+                    neg_frac = 100
+                } else {
+                    neg_frac = 0
+                }
+            } else {
+                neg_frac = parseInt(total / neg)
+            }
+
+            percentage_global = 100 - neg_frac
+            document.getElementById('dislikeAmount').innerHTML = neg + " (" + neg_frac + "%)"
+            document.getElementById('likeAmount').innerHTML = pos + " (" + (100 - neg_frac) + "%)"
+            console.log(neg, details_ss['positive'], details_ss['negative'])
+            document.getElementById('span_rating_count').innerHTML = total
+            document.getElementById('containerDislike').setAttribute("style", "width:10%".replace('10%', neg_frac + "%"))
+        }
+
+        function validateAboutDescription(about, description) {
+            if (about === description) {
+                document.getElementById('short_description').style.display = 'none'
+            }
+        }
+
+        function setWebsite(website_data) {
+            if (website_data !== null) {
+                document.getElementById('website').innerHTML = website_data
+            }
+        }
+
+        function setUpcoming(upcoming_data) {
+            if (upcoming_data['coming_soon']) {
+                document.getElementById('release_date').innerHTML = "COMING SOON! - " + upcoming_data['date']
+            }
+        }
+
+        function setPlatforms(platforms) {
+            if (!platforms['windows']) {
+                document.getElementById('windowsDiv').style.display = "none"
+            }
+            if (!platforms['mac']) {
+                document.getElementById('macosDiv').style.display = "none"
+            }
+            if (!platforms['linux']) {
+                document.getElementById('linuxDiv').style.display = "none"
+            }
+        }
+
+
+
+    </script>
+</head>
+<body>
+{% include 'header.html' %}
+<div id="containerInfo">
+    <div id="containerTop">
+        <h1 id="name"></h1>
+        <div id="platforms">
+            <div id="windowsDiv">
+                <img id="windows" class="os_icon" src="{% static 'admin/img/windows.svg' %}" alt="windows">
+            </div>
+
+            <div id="macosDiv">
+                <img id="macos" class="os_icon" src="{% static 'admin/img/apple.svg' %}" alt="Macos">
+            </div>
+
+            <div id="linuxDiv">
+                <img id="linux" class="os_icon" src="{% static 'admin/img/linux.svg' %}" alt="Linus">
+            </div>
+        </div>
+    </div>
+
+    <div id="containerDate">
+
+        <div id="containerLeft">
+            <div id="developers"></div>
+            <div id="publishers"></div>
+            <p id="release_date"></p>
+            <p id="coming_soon"></p>
+            <p id="owners"></p>
+            <p id="price"></p>
+        </div>
+
+        <div id="containerlikes">
+            <h3>Like - Dislike</h3>
+            <h4>Total: <span style="color: #004080" id="span_rating_count">Loading...</span></h4>
+
+            <div id="containerLikeDislikeRatio">
+                <div id="containerLike">
+                    <p id="likeAmount"></p>
+                </div>
+
+                <div id="containerDislike">
+                    <p id="dislikeAmount"></p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <div id="containerAboutDescription">
+        <h3>About:</h3>
+        {% autoescape off %}
+            <div id="about_the_game"></div>
+            <div id="short_description"></div>{% endautoescape %}
+    </div>
+
+    <div id="containerLanguages">
+        <h3>Supported languages:</h3>
+        <p id="supported_languages"></p>
+    </div>
+    <div id="developers"></div>
+    <div id="publishers"></div>
+    <a id="website" href=""></a>
+</div>
+</body>
+</html>
+<style>
+    #containerInfo {
+        flex-direction: column;
+        padding: 0 10% 0 10%;
+        color: white;
+        display: none;
+    }
+
+    #platforms {
+        display: flex;
+        background: #3f475a;
+        border-radius: 5px;
+        padding: 10px;
+        width: min-content;
+    }
+
+    .os_icon {
+        width: 30px;
+        padding: 0 10px 0 10px;
+        filter: invert(1);
+    }
+
+    #containerTop {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #containerLanguages, #containerDate p h3 {
+        padding: 5px 0 5px 0;
+        margin: 5px 0 5px 0;
+    }
+
+    #containerLanguages, #containerAboutDescription, #containerDate {
+        background: #3f475a;
+        padding: 10px;
+        border-radius: 10px;
+        margin: 20px 0 20px 0;
+    }
+
+    #containerAboutDescription {
+        padding-bottom: 20px;
+    }
+
+    div#containerLikeDislikeRatio {
+        width: 100%;
+        height: 20px;
+        display: flex;
+    }
+
+    #containerDislike {
+        width: 100%;
+        height: 20px;
+        background-color: darkred;
+        border-bottom-right-radius: 10px;
+        border-top-right-radius: 10px;
+
+    }
+
+    #containerLike {
+        width: 100%;
+        height: 20px;
+        background-color: darkgreen;
+        border-bottom-left-radius: 10px;
+        border-top-left-radius: 10px;
+    }
+
+    #containerlikes {
+        text-align: center;
+        background: #3f475a;
+        padding: 0 100px 30px 100px;
+        border-radius: 10px;
+
+    }
+
+    #dislikeAmount, #likeAmount {
+        margin-top: 30px;
+    }
+
+    h4 {
+        margin: 10px;
+    }
+
+    #containerDate {
+        display: grid;
+        grid: "containerLeft containerlikes"1fr/
+    auto 1fr;
+    }
+</style>
